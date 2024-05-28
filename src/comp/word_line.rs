@@ -1,0 +1,179 @@
+use indexmap::IndexMap;
+use tui_big_text::PixelSize;
+use tuirealm::{
+    command::{Cmd, CmdResult},
+    tui::layout::{Constraint, Layout, Rect},
+    AttrValue, Attribute, Frame, MockComponent, Props, State,
+};
+
+use crate::{
+    data::{answers::ANSWERS, words::WORDS},
+    LetterState,
+};
+
+use super::big_letter::BigLetter;
+
+#[derive(Default, Clone, Debug)]
+pub struct WordLine {
+    props: Props,
+    state: WordLineState,
+    letters: Vec<(char, LetterState)>,
+    big_letter_size: PixelSize,
+    cell_width: u16,
+    cell_margin: u16,
+    bg: Option<u8>,
+    answer: String,
+}
+
+#[derive(Debug, Default, Clone, PartialEq)]
+pub enum WordLineState {
+    #[default]
+    None,
+    // Incorrect,
+    // Correct,
+    Incorrect(IndexMap<char, LetterState>),
+    Correct(IndexMap<char, LetterState>),
+}
+
+impl WordLine {
+    pub fn with_answer(mut self, answer: &str) -> Self {
+        self.answer = answer.to_string();
+        self
+    }
+
+    pub fn set_letter_size(&mut self, size: PixelSize) {
+        self.big_letter_size = size;
+    }
+
+    pub fn set_width(&mut self, width: u16) {
+        self.cell_width = width;
+    }
+
+    pub fn set_margin(&mut self, margin: u16) {
+        self.cell_margin = margin;
+    }
+
+    pub fn set_window_bg(&mut self, bg: Option<u8>) {
+        self.bg = bg;
+    }
+
+    pub fn push_char(&mut self, ch: char) {
+        if self.letters.len() < 5 && ch.is_ascii_alphabetic() {
+            let ch = ch.to_ascii_lowercase();
+            self.letters.push((ch, LetterState::Entered));
+        }
+    }
+
+    pub fn del_char(&mut self) {
+        if !self.letters.is_empty() {
+            self.letters.pop();
+        }
+    }
+
+    // Assess entered word
+    pub fn submit(&mut self) -> WordLineState {
+        if self.letters.len() == 5 {
+            let word = self.letters.iter().map(|(c, _)| c).collect::<String>();
+
+            if word == self.answer {
+                let res = self.validate_letters();
+                // self.state = WordLineState::Correct
+                self.state = WordLineState::Correct(res)
+            } else if ANSWERS.contains(word.as_str()) || WORDS.contains(word.as_str()) {
+                let res = self.validate_letters();
+                // self.state = WordLineState::Incorrect
+                self.state = WordLineState::Incorrect(res)
+            };
+        }
+
+        self.state.clone()
+    }
+
+    // TODO Add logic to handle multiples of same letter
+    fn validate_letters(&mut self) -> IndexMap<char, LetterState> {
+        let answer = self.answer.chars().collect::<Vec<_>>();
+        let mut res = IndexMap::new();
+
+        for i in 0..5 {
+            let (entered_letter, _) = self
+                .letters
+                .get(i)
+                .expect("Entered letters did not have expected number of characters");
+            let answer_letter = answer
+                .get(i)
+                .expect("Answer did not have expected number of characters");
+
+            if entered_letter == answer_letter {
+                res.insert(*entered_letter, LetterState::Correct);
+                self.letters[i] = (*entered_letter, LetterState::Correct);
+            } else if answer.contains(entered_letter) {
+                res.insert(*entered_letter, LetterState::Contains);
+                self.letters[i] = (*entered_letter, LetterState::Contains);
+            } else {
+                res.insert(*entered_letter, LetterState::Incorrect);
+                self.letters[i] = (*entered_letter, LetterState::Incorrect);
+            }
+        }
+        res
+    }
+}
+
+impl MockComponent for WordLine {
+    fn view(&mut self, frame: &mut Frame, area: Rect) {
+        if self.props.get_or(Attribute::Display, AttrValue::Flag(true)) == AttrValue::Flag(true) {
+            let rects = Layout::horizontal([
+                Constraint::Length(self.cell_width + 1),
+                Constraint::Length(self.cell_width + 1),
+                Constraint::Length(self.cell_width + 1),
+                Constraint::Length(self.cell_width + 1),
+                Constraint::Length(self.cell_width + 1),
+            ])
+            .split(area);
+
+            for i in 0..5 {
+                // Horizontal margin
+                let area = Layout::horizontal([
+                    Constraint::Length(self.cell_width),
+                    Constraint::Length(1),
+                ])
+                .split(rects[i])[0];
+
+                // if let Some(letter) = self.big_letters.get_mut(i) {
+                //     letter.set_size(self.big_letter_size);
+                //     letter.set_window_bg(self.bg);
+                //     letter.view(frame, area);
+                // }
+                if let Some((ch, state)) = self.letters.get(i) {
+                    BigLetter::default()
+                        .with_char(Some(*ch))
+                        .with_state(*state)
+                        .with_size(self.big_letter_size)
+                        .with_window_bg(self.bg)
+                        .view(frame, area);
+                } else {
+                    BigLetter::default()
+                        .with_char(None)
+                        .with_size(self.big_letter_size)
+                        .with_window_bg(self.bg)
+                        .view(frame, area);
+                }
+            }
+        }
+    }
+
+    fn query(&self, attr: Attribute) -> Option<AttrValue> {
+        self.props.get(attr)
+    }
+
+    fn attr(&mut self, attr: Attribute, value: AttrValue) {
+        self.props.set(attr, value)
+    }
+
+    fn state(&self) -> State {
+        State::None
+    }
+
+    fn perform(&mut self, _: Cmd) -> CmdResult {
+        CmdResult::None
+    }
+}
