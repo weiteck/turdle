@@ -128,6 +128,8 @@ impl Default for Board {
         let answer = answers
             .get(idx)
             .expect("Could not get answer at index to start game");
+
+        // let answer = "robot"; // TESTING
         dbg!(answer);
 
         let lines = (0..6).map(|_| WordLine::default().with_answer(answer)).collect();

@@ -77,11 +77,9 @@ impl WordLine {
 
             if word == self.answer {
                 let res = self.validate_letters();
-                // self.state = WordLineState::Correct
                 self.state = WordLineState::Correct(res)
             } else if ANSWERS.contains(word.as_str()) || WORDS.contains(word.as_str()) {
                 let res = self.validate_letters();
-                // self.state = WordLineState::Incorrect
                 self.state = WordLineState::Incorrect(res)
             };
         }
@@ -89,29 +87,38 @@ impl WordLine {
         self.state.clone()
     }
 
-    // TODO Add logic to handle multiples of same letter
     fn validate_letters(&mut self) -> IndexMap<char, LetterState> {
-        let answer = self.answer.chars().collect::<Vec<_>>();
+        // Helper function to remove `char`s from a `Vec<char>`.
+        fn remove_char(chars: &mut Vec<char>, char_to_remove: &char) {
+            if let Some(idx) = chars.iter().position(|c| c == char_to_remove) {
+                chars.swap_remove(idx);
+            }
+        }
+
+        let answer_chars = self.answer.chars().collect::<Vec<_>>();
+        let mut answer_chars_not_matched = answer_chars.clone();
         let mut res = IndexMap::new();
 
         for i in 0..5 {
-            let (entered_letter, _) = self
+            let (entered_char, _) = self
                 .letters
                 .get(i)
                 .expect("Entered letters did not have expected number of characters");
-            let answer_letter = answer
+            let answer_char = answer_chars
                 .get(i)
                 .expect("Answer did not have expected number of characters");
 
-            if entered_letter == answer_letter {
-                res.insert(*entered_letter, LetterState::Correct);
-                self.letters[i] = (*entered_letter, LetterState::Correct);
-            } else if answer.contains(entered_letter) {
-                res.insert(*entered_letter, LetterState::Contains);
-                self.letters[i] = (*entered_letter, LetterState::Contains);
+            if entered_char == answer_char {
+                remove_char(&mut answer_chars_not_matched, entered_char);
+                res.insert(*entered_char, LetterState::Correct);
+                self.letters[i] = (*entered_char, LetterState::Correct);
+            } else if answer_chars_not_matched.contains(entered_char) {
+                remove_char(&mut answer_chars_not_matched, entered_char);
+                res.insert(*entered_char, LetterState::Contains);
+                self.letters[i] = (*entered_char, LetterState::Contains);
             } else {
-                res.insert(*entered_letter, LetterState::Incorrect);
-                self.letters[i] = (*entered_letter, LetterState::Incorrect);
+                res.insert(*entered_char, LetterState::Incorrect);
+                self.letters[i] = (*entered_char, LetterState::Incorrect);
             }
         }
         res
