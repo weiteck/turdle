@@ -22,6 +22,7 @@ pub enum Msg {
 pub enum Id {
     Board,
     LetterPool,
+    ToastNotification,
 }
 
 #[derive(Debug, Default, PartialEq, Clone, Copy)]

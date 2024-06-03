@@ -1,4 +1,8 @@
-use std::{borrow::Borrow, rc::Rc, sync::RwLock};
+use std::{
+    rc::Rc,
+    sync::RwLock,
+    time::{Duration, Instant},
+};
 
 use indexmap::IndexMap;
 use rand::Rng;
@@ -17,13 +21,15 @@ use tuirealm::{
 
 use crate::{data::answers::ANSWERS, LetterState, Msg};
 
-use super::{letter_pool::LetterPool, word_line::{WordLine, WordLineState}};
+use super::word_line::{WordLine, WordLineState};
 
 const LETTER_SIZE: PixelSize = PixelSize::Sextant;
 const CELL_WIDTH: u16 = 10;
 const CELL_HEIGHT: u16 = 4;
 const CELL_VER_MARGIN: u16 = 1;
 const CELL_HOR_MARGIN: u16 = 1;
+const ANIM_FRAME_DURATION: Duration = Duration::from_millis(50);
+const ANIM_STEP_VALUES: [i16; 8] = [1, 0, -1, 0, 1, 0, -1, 0];
 
 #[derive(Clone, Debug)]
 pub struct Board {
@@ -33,6 +39,8 @@ pub struct Board {
     active_line: usize,
     bg: Option<u8>,
     letter_states: Rc<RwLock<IndexMap<char, LetterState>>>,
+    anim_last_frame_index: usize,
+    anim_last_frame_time: Instant,
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
@@ -41,6 +49,7 @@ pub enum BoardState {
     Playing,
     Failed,
     Succeded,
+    Animating,
 }
 
 impl Board {
@@ -83,6 +92,10 @@ impl Board {
                 };
                 Some(res)
             }
+            WordLineState::Invalid => {
+                self.handle_invalid_word();
+                None
+            }
             WordLineState::None => None,
         };
 
@@ -93,8 +106,16 @@ impl Board {
         CmdResult::None
     }
 
+    fn handle_invalid_word(&mut self) {
+        self.anim_last_frame_time = Instant::now();
+        self.state = BoardState::Animating;
+    }
+
     fn update_letter_pool(&mut self, map: IndexMap<char, LetterState>) {
-        let mut letter_pool_writer = self.letter_states.write().expect("Could not get write access to LetterStates.");
+        let mut letter_pool_writer = self
+            .letter_states
+            .write()
+            .expect("Could not get write access to LetterStates.");
         for (ch, state) in map {
             letter_pool_writer.insert(ch, state);
         }
@@ -132,7 +153,10 @@ impl Default for Board {
         // let answer = "robot"; // TESTING
         dbg!(answer);
 
-        let lines = (0..6).map(|_| WordLine::default().with_answer(answer)).collect();
+        let lines = (0..6)
+            .map(|_| WordLine::default().with_answer(answer))
+            .collect();
+
         Self {
             lines,
             props: Default::default(),
@@ -140,12 +164,38 @@ impl Default for Board {
             active_line: Default::default(),
             bg: Default::default(),
             letter_states: Default::default(),
+            anim_last_frame_index: 0,
+            anim_last_frame_time: Instant::now(),
         }
     }
 }
 
 impl MockComponent for Board {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
+        let anim_offset = if self.state == BoardState::Animating
+            && self.anim_last_frame_index <= ANIM_STEP_VALUES.len() {
+                // Get next frame value
+                if self.anim_last_frame_time.elapsed() >= ANIM_FRAME_DURATION {
+                    self.anim_last_frame_time = Instant::now();
+                    self.anim_last_frame_index += 1;
+                    ANIM_STEP_VALUES
+                        .get(self.anim_last_frame_index - 1)
+                        .unwrap_or(&0_i16)
+                        .to_owned()
+                } else {
+                    // Use current frame value
+                    ANIM_STEP_VALUES
+                        .get(self.anim_last_frame_index)
+                        .unwrap_or(&0_i16)
+                        .to_owned()
+                }
+            } else {
+                // Animation finished - reset
+                self.state = BoardState::Playing;
+                self.anim_last_frame_index = 0;
+                0
+            };
+
         if self.props.get_or(Attribute::Display, AttrValue::Flag(true)) == AttrValue::Flag(true) {
             if let Some(idx) = self.bg {
                 let block = Block::default().bg(Color::Indexed(idx));
@@ -163,9 +213,16 @@ impl MockComponent for Board {
             .split(area);
 
             for i in 0..6 {
-                let area = rects[i];
+                let mut area = rects[i];
 
-                // Update properties here to handle window resize later
+                // Animate active line
+                if self.state == BoardState::Animating && i == self.active_line {
+                    area = Rect {
+                        x: (area.x as i16 + anim_offset) as u16,
+                        ..area
+                    };
+                }
+
                 if let Some(wl) = self.lines.get_mut(i) {
                     wl.set_width(CELL_WIDTH);
                     wl.set_margin(CELL_HOR_MARGIN);

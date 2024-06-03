@@ -3,7 +3,7 @@ use std::{rc::Rc, sync::RwLock};
 use indexmap::IndexMap;
 use tuirealm::{
     command::{Cmd, CmdResult},
-    props::{Alignment, Color, Style},
+    props::{Alignment, Style},
     tui::{
         layout::Rect,
         style::Stylize,
@@ -23,11 +23,6 @@ pub struct LetterPool {
 }
 
 impl LetterPool {
-    // pub fn with_letter_state(mut self, ls: Rc<RwLock<IndexMap<char, LetterState>>>) -> Self {
-    //     self.pool = ls;
-    //     self
-    // }
-
     pub fn new() -> (Self, Rc<RwLock<IndexMap<char, LetterState>>>) {
         let mut pool = IndexMap::with_capacity(26);
         ('a'..='z').for_each(|c| _ = pool.insert(c, LetterState::Unused));
@@ -42,29 +37,7 @@ impl LetterPool {
 
         (letter_pool, pool_rc)
     }
-
-    // pub fn set_state(&mut self, ch: char, state: LetterState) {
-    //     self.pool.insert(ch, state);
-    // }
-
-    // pub fn set_state_batch(&mut self, states: IndexMap<char, LetterState>) {
-    //     for (ch, state) in states {
-    //         self.pool.insert(ch, state);
-    //     }
-    // }
 }
-
-// impl Default for LetterPool {
-//     fn default() -> Self {
-//         let mut pool = IndexMap::new();
-//         ('a'..='z').for_each(|c| _ = pool.insert(c, LetterState::Unused));
-
-//         Self {
-//             props: Default::default(),
-//             pool,
-//         }
-//     }
-// }
 
 impl MockComponent for LetterPool {
     fn view(&mut self, frame: &mut Frame, area: Rect) {

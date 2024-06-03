@@ -29,8 +29,7 @@ pub struct WordLine {
 pub enum WordLineState {
     #[default]
     None,
-    // Incorrect,
-    // Correct,
+    Invalid, // Word not in either word list
     Incorrect(IndexMap<char, LetterState>),
     Correct(IndexMap<char, LetterState>),
 }
@@ -70,7 +69,7 @@ impl WordLine {
         }
     }
 
-    // Assess entered word
+    // Assess entered word if 5 letters have been entered
     pub fn submit(&mut self) -> WordLineState {
         if self.letters.len() == 5 {
             let word = self.letters.iter().map(|(c, _)| c).collect::<String>();
@@ -81,7 +80,9 @@ impl WordLine {
             } else if ANSWERS.contains(word.as_str()) || WORDS.contains(word.as_str()) {
                 let res = self.validate_letters();
                 self.state = WordLineState::Incorrect(res)
-            };
+            } else {
+                return WordLineState::Invalid;
+            }
         }
 
         self.state.clone()
@@ -128,41 +129,38 @@ impl WordLine {
 impl MockComponent for WordLine {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
         if self.props.get_or(Attribute::Display, AttrValue::Flag(true)) == AttrValue::Flag(true) {
-            let rects = Layout::horizontal([
-                Constraint::Length(self.cell_width + 1),
-                Constraint::Length(self.cell_width + 1),
-                Constraint::Length(self.cell_width + 1),
-                Constraint::Length(self.cell_width + 1),
-                Constraint::Length(self.cell_width + 1),
+            let margin = 1;
+
+            // Outer cells with right-hand margin
+            let col_rects = Layout::horizontal([
+                Constraint::Length(self.cell_width + margin),
+                Constraint::Length(self.cell_width + margin),
+                Constraint::Length(self.cell_width + margin),
+                Constraint::Length(self.cell_width + margin),
+                Constraint::Length(self.cell_width + margin),
             ])
             .split(area);
 
             for i in 0..5 {
-                // Horizontal margin
-                let area = Layout::horizontal([
+                // Inner cell
+                let cell_rect = Layout::horizontal([
                     Constraint::Length(self.cell_width),
-                    Constraint::Length(1),
                 ])
-                .split(rects[i])[0];
+                .split(col_rects[i])[0];
 
-                // if let Some(letter) = self.big_letters.get_mut(i) {
-                //     letter.set_size(self.big_letter_size);
-                //     letter.set_window_bg(self.bg);
-                //     letter.view(frame, area);
-                // }
                 if let Some((ch, state)) = self.letters.get(i) {
                     BigLetter::default()
                         .with_char(Some(*ch))
                         .with_state(*state)
                         .with_size(self.big_letter_size)
                         .with_window_bg(self.bg)
-                        .view(frame, area);
+                        .view(frame, cell_rect);
                 } else {
                     BigLetter::default()
                         .with_char(None)
                         .with_size(self.big_letter_size)
                         .with_window_bg(self.bg)
-                        .view(frame, area);
+                        .view(frame, cell_rect);
                 }
             }
         }

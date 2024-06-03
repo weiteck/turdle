@@ -1,15 +1,13 @@
-use std::{rc::Rc, sync::RwLock, time::Duration};
+use std::time::Duration;
 
 use anyhow::Result;
-use indexmap::IndexMap;
 use tuirealm::{
-    terminal::TerminalBridge, tui::layout::{Constraint, Layout}, Application, EventListenerCfg, NoUserEvent, Update
+    terminal::TerminalBridge,
+    tui::layout::{Constraint, Layout},
+    Application, EventListenerCfg, NoUserEvent, Update,
 };
 
-use crate::{comp::{
-    board::Board,
-    letter_pool::LetterPool,
-}, LetterState};
+use crate::comp::{board::Board, letter_pool::LetterPool, toast::ToastNotification};
 
 use super::{Id, Msg};
 
@@ -30,7 +28,7 @@ impl Model {
             ])
             .areas(frame.size());
 
-            let [_, rect_board, _, rect_letter_pool, _] = Layout::vertical([
+            let [rect_toast, rect_board, _, rect_letter_pool, _] = Layout::vertical([
                 Constraint::Fill(1),
                 Constraint::Length(6 * 5), // Board
                 Constraint::Length(1),
@@ -41,6 +39,7 @@ impl Model {
 
             self.app.view(&Id::Board, frame, rect_board);
             self.app.view(&Id::LetterPool, frame, rect_letter_pool);
+            self.app.view(&Id::ToastNotification, frame, rect_toast);
         })?;
 
         Ok(())
@@ -51,7 +50,7 @@ impl Model {
             EventListenerCfg::default()
                 .default_input_listener(Duration::from_millis(20))
                 .poll_timeout(Duration::from_millis(10))
-                .tick_interval(Duration::from_millis(1000)),
+                .tick_interval(Duration::from_millis(50)),
         );
 
         // Mount components
@@ -59,6 +58,11 @@ impl Model {
         let board = Board::default().with_letter_state(pool_rc);
         app.mount(Id::Board, Box::new(board), vec![])?;
         app.mount(Id::LetterPool, Box::new(letter_pool), vec![])?;
+        app.mount(
+            Id::ToastNotification,
+            Box::<ToastNotification>::default(),
+            vec![],
+        )?;
         app.active(&Id::Board)?;
 
         Ok(app)
