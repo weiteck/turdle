@@ -10,7 +10,7 @@ use tuirealm::{
     AttrValue, Attribute, Component, Event, MockComponent, NoUserEvent, Props, State,
 };
 
-use crate::Msg;
+use crate::model::Msg;
 
 const DEFAULT_DURATION: u64 = 5_000;
 const DEFAULT_ALIGNMENT: Alignment = Alignment::Center;

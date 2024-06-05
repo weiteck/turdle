@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use anyhow::Result;
+use indexmap::IndexMap;
 use tuirealm::{
     terminal::TerminalBridge,
     tui::layout::{Constraint, Layout},
@@ -9,13 +10,34 @@ use tuirealm::{
 
 use crate::comp::{board::Board, letter_pool::LetterPool, toast::ToastNotification};
 
-use super::{Id, Msg};
+#[derive(Debug, PartialEq)]
+pub enum Msg {
+    Quit,
+    None,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+pub enum Id {
+    Board,
+    LetterPool,
+    ToastNotification,
+}
 
 pub struct Model {
     pub app: Application<Id, Msg, NoUserEvent>,
     pub quit: bool,
     pub redraw: bool,
     pub terminal: TerminalBridge,
+}
+
+#[derive(Debug, Default, PartialEq, Clone, Copy)]
+pub enum LetterState {
+    #[default]
+    Unused,
+    Entered,   // Letter input but not evaluated
+    Incorrect, // Letter not in word
+    Contains,  // Letter in word but different position
+    Correct,   // Letter in word at entered position
 }
 
 impl Model {
@@ -32,7 +54,7 @@ impl Model {
                 Constraint::Fill(1),
                 Constraint::Length(6 * 5), // Board
                 Constraint::Length(1),
-                Constraint::Length(2), // Letter pool
+                Constraint::Length(3), // Letter pool
                 Constraint::Fill(1),
             ])
             .areas(rect_centre);

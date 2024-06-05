@@ -10,7 +10,7 @@ use tuirealm::{
     AttrValue, Attribute, Frame, MockComponent, Props, State,
 };
 
-use crate::{LetterState, theme};
+use crate::{model::LetterState, theme};
 
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct BigLetter {

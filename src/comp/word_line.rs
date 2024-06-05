@@ -8,7 +8,7 @@ use tuirealm::{
 
 use crate::{
     data::{answers::ANSWERS, words::WORDS},
-    LetterState,
+    model::LetterState,
 };
 
 use super::big_letter::BigLetter;

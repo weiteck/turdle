@@ -19,7 +19,10 @@ use tuirealm::{
     AttrValue, Attribute, Component, Event, Frame, MockComponent, NoUserEvent, Props, State,
 };
 
-use crate::{data::answers::ANSWERS, LetterState, Msg};
+use crate::{
+    data::answers::ANSWERS,
+    model::{LetterState, Msg},
+};
 
 use super::word_line::{WordLine, WordLineState};
 
@@ -150,8 +153,8 @@ impl Default for Board {
             .get(idx)
             .expect("Could not get answer at index to start game");
 
-        let answer = "aback"; // TESTING
-        dbg!(answer);
+        // let answer = "aback"; // TESTING
+        println!("The turdle word was: \"{}\".", answer);
 
         let lines = (0..6)
             .map(|_| WordLine::default().with_answer(answer))
@@ -159,13 +162,13 @@ impl Default for Board {
 
         Self {
             lines,
+            anim_last_frame_index: 0,
+            anim_last_frame_time: Instant::now(),
             props: Default::default(),
             state: Default::default(),
             active_line: Default::default(),
             bg: Default::default(),
             letter_states: Default::default(),
-            anim_last_frame_index: 0,
-            anim_last_frame_time: Instant::now(),
         }
     }
 }
@@ -265,22 +268,19 @@ impl Component<Msg, NoUserEvent> for Board {
 
             // Background colour hotkeys
             Event::Keyboard(KeyEvent {
-                code: Key::PageDown,
-                modifiers: KeyModifiers::CONTROL,
+                code: Key::PageDown, ..
             }) => {
                 self.next_bg_colour();
                 CmdResult::None
             }
             Event::Keyboard(KeyEvent {
-                code: Key::PageUp,
-                modifiers: KeyModifiers::CONTROL,
+                code: Key::PageUp, ..
             }) => {
                 self.prev_bg_colour();
                 CmdResult::None
             }
             Event::Keyboard(KeyEvent {
-                code: Key::Home,
-                modifiers: KeyModifiers::CONTROL,
+                code: Key::Home, ..
             }) => {
                 self.reset_bg_colour();
                 CmdResult::None
