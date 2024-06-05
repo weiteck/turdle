@@ -5,14 +5,13 @@ edition = "2021"
 description = "A TUi woRDLE clone for your terminal"
 keywords = ["wordle"]
 categories = ["games", "command-line-utilities"]
-license = "MIT OR LGPL"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/weiteck/turdle"
 
 [dependencies]
 anyhow = "1.0.82"
 crossterm = "0.27.0"
 indexmap = "2.2.6"
-lazy_static = "1.4.0"
 rand = "0.8.5"
 tui-big-text = "0.4.3"
 tui-realm-stdlib = "1.3.2"

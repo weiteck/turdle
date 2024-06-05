@@ -23,10 +23,6 @@ pub struct BigLetter {
 }
 
 impl BigLetter {
-    pub fn char(&self) -> Option<char> {
-        self.value
-    }
-
     pub fn with_char(mut self, ch: Option<char>) -> Self {
         if let Some(ch) = ch {
             self.value = Some(ch);
@@ -46,17 +42,9 @@ impl BigLetter {
         self
     }
 
-    pub fn letter_state(&self) -> LetterState {
-        self.state
-    }
-
     pub fn with_state(mut self, state: LetterState) -> Self {
         self.state = state;
         self
-    }
-
-    pub fn set_state(&mut self, state: LetterState) {
-        self.state = state;
     }
 
     pub fn with_colour(mut self) -> Self {

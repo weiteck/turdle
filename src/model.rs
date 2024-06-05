@@ -1,16 +1,14 @@
 use std::time::Duration;
 
 use anyhow::Result;
-use indexmap::IndexMap;
 use tui_realm_stdlib::Phantom;
 use tuirealm::{
-    event::{Key, KeyEvent, KeyModifiers},
     terminal::TerminalBridge,
     tui::layout::{Constraint, Layout},
     Application, EventListenerCfg, NoUserEvent, Sub, SubClause, SubEventClause, Update,
 };
 
-use crate::comp::{board::Board, letter_pool::LetterPool, toast::ToastNotification};
+use crate::comp::{board::Board, letter_pool::LetterPool};
 
 #[derive(Debug, PartialEq)]
 pub enum Msg {
