@@ -112,12 +112,12 @@ impl Board {
     }
 
     fn update_letter_pool(&mut self, map: IndexMap<char, LetterState>) {
-        let mut letter_pool_writer = self
+        let mut writer = self
             .letter_states
             .write()
             .expect("Could not get write access to LetterStates.");
-        for (ch, state) in map {
-            letter_pool_writer.insert(ch, state);
+        for (ch, state) in &map {
+            writer.insert(*ch, *state);
         }
     }
 
@@ -150,7 +150,7 @@ impl Default for Board {
             .get(idx)
             .expect("Could not get answer at index to start game");
 
-        // let answer = "robot"; // TESTING
+        let answer = "aback"; // TESTING
         dbg!(answer);
 
         let lines = (0..6)
@@ -173,28 +173,29 @@ impl Default for Board {
 impl MockComponent for Board {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
         let anim_offset = if self.state == BoardState::Animating
-            && self.anim_last_frame_index <= ANIM_STEP_VALUES.len() {
-                // Get next frame value
-                if self.anim_last_frame_time.elapsed() >= ANIM_FRAME_DURATION {
-                    self.anim_last_frame_time = Instant::now();
-                    self.anim_last_frame_index += 1;
-                    ANIM_STEP_VALUES
-                        .get(self.anim_last_frame_index - 1)
-                        .unwrap_or(&0_i16)
-                        .to_owned()
-                } else {
-                    // Use current frame value
-                    ANIM_STEP_VALUES
-                        .get(self.anim_last_frame_index)
-                        .unwrap_or(&0_i16)
-                        .to_owned()
-                }
+            && self.anim_last_frame_index <= ANIM_STEP_VALUES.len()
+        {
+            // Get next frame value
+            if self.anim_last_frame_time.elapsed() >= ANIM_FRAME_DURATION {
+                self.anim_last_frame_time = Instant::now();
+                self.anim_last_frame_index += 1;
+                ANIM_STEP_VALUES
+                    .get(self.anim_last_frame_index - 1)
+                    .unwrap_or(&0_i16)
+                    .to_owned()
             } else {
-                // Animation finished - reset
-                self.state = BoardState::Playing;
-                self.anim_last_frame_index = 0;
-                0
-            };
+                // Use current frame value
+                ANIM_STEP_VALUES
+                    .get(self.anim_last_frame_index)
+                    .unwrap_or(&0_i16)
+                    .to_owned()
+            }
+        } else {
+            // Animation finished - reset
+            self.state = BoardState::Playing;
+            self.anim_last_frame_index = 0;
+            0
+        };
 
         if self.props.get_or(Attribute::Display, AttrValue::Flag(true)) == AttrValue::Flag(true) {
             if let Some(idx) = self.bg {

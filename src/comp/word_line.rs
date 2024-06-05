@@ -115,7 +115,13 @@ impl WordLine {
                 self.letters[i] = (*entered_char, LetterState::Correct);
             } else if answer_chars_not_matched.contains(entered_char) {
                 remove_char(&mut answer_chars_not_matched, entered_char);
-                res.insert(*entered_char, LetterState::Contains);
+
+                let current_state = res.insert(*entered_char, LetterState::Contains);
+                // Don't downgrade `Correct` letters to `Contains`
+                if current_state == Some(LetterState::Correct) {
+                    res.insert(*entered_char, LetterState::Correct);
+                }
+
                 self.letters[i] = (*entered_char, LetterState::Contains);
             } else {
                 res.insert(*entered_char, LetterState::Incorrect);
@@ -143,10 +149,8 @@ impl MockComponent for WordLine {
 
             for i in 0..5 {
                 // Inner cell
-                let cell_rect = Layout::horizontal([
-                    Constraint::Length(self.cell_width),
-                ])
-                .split(col_rects[i])[0];
+                let cell_rect = Layout::horizontal([Constraint::Length(self.cell_width)])
+                    .split(col_rects[i])[0];
 
                 if let Some((ch, state)) = self.letters.get(i) {
                     BigLetter::default()
