@@ -87,28 +87,29 @@ impl Board {
             .get_mut(self.active_line)
             .expect("Could not get active word line");
 
-        let res = match line.submit() {
-            WordLineState::Correct(res) => Some(res),
+        match line.submit() {
+            WordLineState::Correct(res) => {
+                self.update_letter_pool(res);
+                self.state = BoardState::Succeded;
+            }
             WordLineState::Incorrect(res) => {
+                self.update_letter_pool(res);
                 if self.active_line < 5 {
                     self.active_line += 1;
+                } else {
+                    self.state = BoardState::Failed;
                 };
-                Some(res)
             }
             WordLineState::Invalid => {
                 self.handle_invalid_word();
-                None
             }
-            WordLineState::None => None,
-        };
-
-        if let Some(res) = res {
-            self.update_letter_pool(res);
+            _ => {}
         };
 
         CmdResult::None
     }
 
+    // Trigger shake animation
     fn handle_invalid_word(&mut self) {
         self.anim_last_frame_time = Instant::now();
         self.state = BoardState::Animating;
@@ -263,12 +264,10 @@ impl MockComponent for Board {
 impl Component<Msg, NoUserEvent> for Board {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
         let _ = match ev {
-            // Global hotkeys
-            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => return Some(Msg::Quit),
-
             // Background colour hotkeys
             Event::Keyboard(KeyEvent {
-                code: Key::PageDown, ..
+                code: Key::PageDown,
+                ..
             }) => {
                 self.next_bg_colour();
                 CmdResult::None

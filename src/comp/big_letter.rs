@@ -19,6 +19,7 @@ pub struct BigLetter {
     value: Option<char>,
     size: PixelSize,
     bg: Option<u8>,
+    revealed: bool, // Whether the letter has been validated, i.e. bg colour set
 }
 
 impl BigLetter {
@@ -57,17 +58,25 @@ impl BigLetter {
     pub fn set_state(&mut self, state: LetterState) {
         self.state = state;
     }
+
+    pub fn with_colour(mut self) -> Self {
+        self.revealed = true;
+        self
+    }
 }
 
 impl MockComponent for BigLetter {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
         if self.props.get_or(Attribute::Display, AttrValue::Flag(true)) == AttrValue::Flag(true) {
-            // TODO Move to style prop?
-            let bg = match self.state {
-                LetterState::Incorrect => theme::CELL_BG_INCORRECT,
-                LetterState::Contains => theme::CELL_BG_CONTAINS,
-                LetterState::Correct => theme::CELL_BG_CORRECT,
-                _ => theme::CELL_BG_EMPTY,
+            let bg = if self.revealed {
+                match self.state {
+                    LetterState::Incorrect => theme::CELL_BG_INCORRECT,
+                    LetterState::Contains => theme::CELL_BG_CONTAINS,
+                    LetterState::Correct => theme::CELL_BG_CORRECT,
+                    _ => theme::CELL_BG_EMPTY,
+                }
+            } else {
+                theme::CELL_BG_EMPTY
             };
 
             let fg = theme::LETTER_FG;

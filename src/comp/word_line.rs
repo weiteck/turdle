@@ -1,3 +1,5 @@
+use std::time::{Duration, Instant};
+
 use indexmap::IndexMap;
 use tui_big_text::PixelSize;
 use tuirealm::{
@@ -13,7 +15,9 @@ use crate::{
 
 use super::big_letter::BigLetter;
 
-#[derive(Default, Clone, Debug)]
+const ANIM_REVEAL_STEP_TIME: Duration = Duration::from_millis(400);
+
+#[derive(Clone, Debug)]
 pub struct WordLine {
     props: Props,
     state: WordLineState,
@@ -23,6 +27,9 @@ pub struct WordLine {
     cell_margin: u16,
     bg: Option<u8>,
     answer: String,
+    animating_reveal: bool,
+    revealed: usize,
+    last_frame_time: Instant,
 }
 
 #[derive(Debug, Default, Clone, PartialEq)]
@@ -76,9 +83,11 @@ impl WordLine {
 
             if word == self.answer {
                 let res = self.validate_letters();
+                self.begin_reveal();
                 self.state = WordLineState::Correct(res)
             } else if ANSWERS.contains(word.as_str()) || WORDS.contains(word.as_str()) {
                 let res = self.validate_letters();
+                self.begin_reveal();
                 self.state = WordLineState::Incorrect(res)
             } else {
                 return WordLineState::Invalid;
@@ -130,6 +139,29 @@ impl WordLine {
         }
         res
     }
+
+    fn begin_reveal(&mut self) {
+        self.animating_reveal = true;
+        self.last_frame_time = Instant::now();
+    }
+}
+
+impl Default for WordLine {
+    fn default() -> Self {
+        Self {
+            props: Default::default(),
+            state: Default::default(),
+            letters: Default::default(),
+            big_letter_size: Default::default(),
+            cell_width: Default::default(),
+            cell_margin: Default::default(),
+            bg: Default::default(),
+            answer: Default::default(),
+            animating_reveal: Default::default(),
+            revealed: Default::default(),
+            last_frame_time: Instant::now(),
+        }
+    }
 }
 
 impl MockComponent for WordLine {
@@ -147,19 +179,36 @@ impl MockComponent for WordLine {
             ])
             .split(area);
 
+            // Inner cells
             for i in 0..5 {
-                // Inner cell
                 let cell_rect = Layout::horizontal([Constraint::Length(self.cell_width)])
                     .split(col_rects[i])[0];
 
                 if let Some((ch, state)) = self.letters.get(i) {
-                    BigLetter::default()
-                        .with_char(Some(*ch))
-                        .with_state(*state)
-                        .with_size(self.big_letter_size)
-                        .with_window_bg(self.bg)
-                        .view(frame, cell_rect);
+                    if self.animating_reveal && i <= self.revealed {
+                        // Animate next letter
+                        if self.last_frame_time.elapsed() >= ANIM_REVEAL_STEP_TIME {
+                            self.revealed += 1;
+                            self.last_frame_time = Instant::now();
+                        }
+
+                        let mut bl = BigLetter::default()
+                            .with_char(Some(*ch))
+                            .with_state(*state)
+                            .with_size(self.big_letter_size)
+                            .with_window_bg(self.bg)
+                            .with_colour();
+                        bl.view(frame, cell_rect);
+                    } else {
+                        let mut bl = BigLetter::default()
+                            .with_char(Some(*ch))
+                            .with_size(self.big_letter_size)
+                            .with_window_bg(self.bg)
+                            .with_colour();
+                        bl.view(frame, cell_rect);
+                    };
                 } else {
+                    // Empty cells
                     BigLetter::default()
                         .with_char(None)
                         .with_size(self.big_letter_size)

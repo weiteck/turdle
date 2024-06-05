@@ -2,7 +2,9 @@ use std::time::Duration;
 
 use anyhow::Result;
 use indexmap::IndexMap;
+use tui_realm_stdlib::Phantom;
 use tuirealm::{
+    event::{Key, KeyEvent, KeyModifiers},
     terminal::TerminalBridge,
     tui::layout::{Constraint, Layout},
     Application, EventListenerCfg, NoUserEvent, Sub, SubClause, SubEventClause, Update,
@@ -12,8 +14,9 @@ use crate::comp::{board::Board, letter_pool::LetterPool, toast::ToastNotificatio
 
 #[derive(Debug, PartialEq)]
 pub enum Msg {
-    Quit,
     None,
+    Notification(String),
+    Quit,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
@@ -21,6 +24,7 @@ pub enum Id {
     Board,
     LetterPool,
     ToastNotification,
+    GlobalListener,
 }
 
 pub struct Model {
@@ -50,18 +54,18 @@ impl Model {
             ])
             .areas(frame.size());
 
-            let [rect_toast, rect_board, _, rect_letter_pool, _] = Layout::vertical([
+            let [_, rect_board, _, rect_letter_pool, _] = Layout::vertical([
                 Constraint::Fill(1),
                 Constraint::Length(6 * 5), // Board
-                Constraint::Length(1),
-                Constraint::Length(3), // Letter pool
+                Constraint::Length(1),     // Margin
+                Constraint::Length(3),     // Letter pool
                 Constraint::Fill(1),
             ])
             .areas(rect_centre);
 
             self.app.view(&Id::Board, frame, rect_board);
             self.app.view(&Id::LetterPool, frame, rect_letter_pool);
-            self.app.view(&Id::ToastNotification, frame, rect_toast);
+            self.app.view(&Id::ToastNotification, frame, frame.size());
         })?;
 
         Ok(())
@@ -78,18 +82,18 @@ impl Model {
         // Mount components
         let (letter_pool, pool_rc) = LetterPool::new();
         let board = Board::default().with_letter_state(pool_rc);
-        app.mount(Id::Board, Box::new(board), vec![])?;
+        app.mount(
+            Id::Board,
+            Box::new(board),
+            vec![Sub::new(SubEventClause::Any, SubClause::Always)],
+        )?;
         app.mount(
             Id::LetterPool,
             Box::new(letter_pool),
-            vec![Sub::new(SubEventClause::Any, SubClause::Always)], // Gets subscriber to toggle mode
+            vec![Sub::new(SubEventClause::Any, SubClause::Always)],
         )?;
-        app.mount(
-            Id::ToastNotification,
-            Box::<ToastNotification>::default(),
-            vec![],
-        )?;
-        app.active(&Id::Board)?;
+        app.mount(Id::GlobalListener, Box::<Phantom>::default(), vec![])?;
+        app.active(&Id::GlobalListener)?;
 
         Ok(app)
     }

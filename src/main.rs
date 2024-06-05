@@ -4,6 +4,7 @@ use anyhow::{bail, Result};
 use model::Model;
 use tuirealm::{PollStrategy, Update};
 
+mod listener;
 mod comp;
 mod data;
 mod model;
