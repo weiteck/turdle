@@ -1,4 +1,4 @@
-use std::{rc::Rc, sync::RwLock};
+use std::{env, rc::Rc, sync::RwLock};
 
 use indexmap::IndexMap;
 use tuirealm::{
@@ -28,6 +28,8 @@ pub struct LetterPool {
 
 impl LetterPool {
     pub fn new() -> (Self, Rc<RwLock<IndexMap<char, LetterState>>>) {
+        let qwerty_mode = matches!(env::var("TURDLE_QWERTY_MODE"), Ok(s) if s == "1");
+
         let mut pool = IndexMap::with_capacity(26);
         ('a'..='z').for_each(|c| _ = pool.insert(c, LetterState::Unused));
 
@@ -37,7 +39,7 @@ impl LetterPool {
         let letter_pool = Self {
             props: Default::default(),
             pool,
-            qwerty_mode: false,
+            qwerty_mode,
         };
 
         (letter_pool, pool_rc)
