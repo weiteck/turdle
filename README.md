@@ -9,10 +9,10 @@ A random word is selected each time the game is run.
 * Large-font gameboard reminiscent of the original game
 * Animated letter reveals and invalid word feedback
 * 'Keyboard' showing the state of each letter you've used
-* Use <TAB> to toggle the keyboard layout or set `TURDLE_QWERTY_MODE=1` to start with QWERTY layout
+* Use <kbd>tab</kbd> to toggle the keyboard layout or set `TURDLE_QWERTY_MODE=1` to start with QWERTY layout
 
 ### Screenshot
 ![Turdle screenshot](https://files.catbox.moe/ijnh30.png)
 
-##### License
+### License
 MIT or Apache 2.0 at your discretion.
