@@ -5,7 +5,7 @@ use indexmap::IndexMap;
 use tuirealm::{
     terminal::TerminalBridge,
     tui::layout::{Constraint, Layout},
-    Application, EventListenerCfg, NoUserEvent, Update,
+    Application, EventListenerCfg, NoUserEvent, Sub, SubClause, SubEventClause, Update,
 };
 
 use crate::comp::{board::Board, letter_pool::LetterPool, toast::ToastNotification};
@@ -37,7 +37,7 @@ pub enum LetterState {
     Entered,   // Letter input but not evaluated
     Incorrect, // Letter not in word
     Contains,  // Letter in word but different position
-    Correct,   // Letter in word at entered position
+    Correct,   // Letter and position correct
 }
 
 impl Model {
@@ -79,7 +79,11 @@ impl Model {
         let (letter_pool, pool_rc) = LetterPool::new();
         let board = Board::default().with_letter_state(pool_rc);
         app.mount(Id::Board, Box::new(board), vec![])?;
-        app.mount(Id::LetterPool, Box::new(letter_pool), vec![])?;
+        app.mount(
+            Id::LetterPool,
+            Box::new(letter_pool),
+            vec![Sub::new(SubEventClause::Any, SubClause::Always)], // Gets subscriber to toggle mode
+        )?;
         app.mount(
             Id::ToastNotification,
             Box::<ToastNotification>::default(),

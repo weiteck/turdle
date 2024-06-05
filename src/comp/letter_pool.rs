@@ -3,6 +3,7 @@ use std::{rc::Rc, sync::RwLock};
 use indexmap::IndexMap;
 use tuirealm::{
     command::{Cmd, CmdResult},
+    event::{Key, KeyEvent, KeyModifiers},
     props::{Alignment, Style},
     tui::{
         layout::Rect,
@@ -140,6 +141,12 @@ impl MockComponent for LetterPool {
 impl Component<Msg, NoUserEvent> for LetterPool {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
         let _ = match ev {
+            Event::Keyboard(KeyEvent {
+                code: Key::Tab, ..
+            }) => {
+                self.toggle_qwerty_mode();
+                CmdResult::None
+            }
             _ => CmdResult::None,
         };
 
