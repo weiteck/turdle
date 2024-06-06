@@ -43,6 +43,15 @@ pub enum LetterState {
 }
 
 impl Model {
+    pub fn new(answer: &str) -> Self {
+        Self {
+            app: Self::init_app(answer).expect("Could not initialise application"),
+            quit: false,
+            redraw: true,
+            terminal: TerminalBridge::new().expect("Could not initialise terminal"),
+        }
+    }
+
     pub fn view(&mut self) -> Result<()> {
         self.terminal.raw_mut().draw(|frame| {
             let [_, rect_centre, _] = Layout::horizontal([
@@ -69,7 +78,7 @@ impl Model {
         Ok(())
     }
 
-    fn init_app() -> Result<Application<Id, Msg, NoUserEvent>> {
+    fn init_app(answer: &str) -> Result<Application<Id, Msg, NoUserEvent>> {
         let mut app = Application::init(
             EventListenerCfg::default()
                 .default_input_listener(Duration::from_millis(20))
@@ -79,7 +88,7 @@ impl Model {
 
         // Mount components
         let (letter_pool, pool_rc) = LetterPool::new();
-        let board = Board::default().with_letter_state(pool_rc);
+        let board = Board::new(answer).with_letter_state(pool_rc); // TODO
         app.mount(
             Id::Board,
             Box::new(board),
@@ -94,17 +103,6 @@ impl Model {
         app.active(&Id::GlobalListener)?;
 
         Ok(app)
-    }
-}
-
-impl Default for Model {
-    fn default() -> Self {
-        Self {
-            app: Self::init_app().expect("Could not initialise application"),
-            quit: false,
-            redraw: true,
-            terminal: TerminalBridge::new().expect("Could not initialise terminal"),
-        }
     }
 }
 

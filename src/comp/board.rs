@@ -5,7 +5,6 @@ use std::{
 };
 
 use indexmap::IndexMap;
-use rand::Rng;
 use tui_big_text::PixelSize;
 use tuirealm::{
     command::{Cmd, CmdResult},
@@ -19,10 +18,7 @@ use tuirealm::{
     AttrValue, Attribute, Component, Event, Frame, MockComponent, NoUserEvent, Props, State,
 };
 
-use crate::{
-    data::answers::ANSWERS,
-    model::{LetterState, Msg},
-};
+use crate::model::{LetterState, Msg};
 
 use super::word_line::{WordLine, WordLineState};
 
@@ -56,6 +52,23 @@ pub enum BoardState {
 }
 
 impl Board {
+    pub fn new(answer: &str) -> Self {
+        let lines = (0..6)
+            .map(|_| WordLine::default().with_answer(answer))
+            .collect();
+
+        Self {
+            lines,
+            anim_last_frame_index: 0,
+            anim_last_frame_time: Instant::now(),
+            props: Default::default(),
+            state: Default::default(),
+            active_line: Default::default(),
+            bg: Default::default(),
+            letter_states: Default::default(),
+        }
+    }
+
     pub fn with_letter_state(mut self, ls: Rc<RwLock<IndexMap<char, LetterState>>>) -> Self {
         self.letter_states = ls;
         self
@@ -143,34 +156,6 @@ impl Board {
 
     fn reset_bg_colour(&mut self) {
         self.bg = None;
-    }
-}
-
-impl Default for Board {
-    fn default() -> Self {
-        let answers = ANSWERS.lines().collect::<Vec<_>>();
-        let idx = rand::thread_rng().gen_range(0..answers.len());
-        let answer = answers
-            .get(idx)
-            .expect("Could not get answer at index to start game");
-
-        // let answer = "aback"; // TESTING
-        println!("The turdle word was: \"{}\".", answer);
-
-        let lines = (0..6)
-            .map(|_| WordLine::default().with_answer(answer))
-            .collect();
-
-        Self {
-            lines,
-            anim_last_frame_index: 0,
-            anim_last_frame_time: Instant::now(),
-            props: Default::default(),
-            state: Default::default(),
-            active_line: Default::default(),
-            bg: Default::default(),
-            letter_states: Default::default(),
-        }
     }
 }
 
