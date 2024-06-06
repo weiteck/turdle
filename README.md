@@ -3,7 +3,7 @@
 
 ![Turdle screenshot](https://files.catbox.moe/ijnh30.png)
 
-Turdle (a concatenation of **TU**I + Wo**rdle**) is a clone of the popular browser-based word game Wordle by Josh Wardle, now owned by The New York Times.
+Turdle is a clone of the popular browser-based word game Wordle by Josh Wardle, now owned by The New York Times. The (admittedly crude) name is a concatenation of **TU**I + Wo**rdle**.
 
 A random word is selected each time the game is run. Run `turdle --help` for additional options.
 
@@ -13,21 +13,20 @@ A random word is selected each time the game is run. Run `turdle --help` for add
 * Animated letter reveals and invalid word feedback
 * 'Keyboard' showing the state of each letter you've used
 * Play today's Wordle with `turdle today`
-* Play a specific date's Wordle with `turdle date YY-MM-DD`
+* Play a specific date's Wordle with `turdle date <YY-MM-DD>`
 
 ### Special Keys
-* Use <kbd>Tab</kbd> to toggle the keyboard layout or set `TURDLE_QWERTY_MODE=1` to start with QWERTY layout
-* Use <kbd>Page Up</kbd> and <kbd>Page Down</kbd> to cycle the background colour
-* Use <kbd>Home</kbd> to reset the background colour
+* Use <kbd>Tab</kbd> to toggle the keyboard layout or set `TURDLE_QWERTY_MODE=1` to always start with QWERTY layout
+* Use <kbd>Page Up</kbd> and <kbd>Page Down</kbd> to cycle the background colour and <kbd>Home</kbd> to reset it
 
 ## Installation
 Linux and Windows binaries are available on the [releases](https://github.com/weiteck/turdle/releases) page.
 
-Alternatively, if you have Rust [installed](https://rustup.rs), you can install by running:
+Alternatively, if you already have Rust [installed](https://rustup.rs), simply run:
 ```
 cargo install turdle --locked
 ```
-If you encounter a missing linker error, your system may be missing the required compiler toolchain:
+If you encounter a linker error, your system may be missing the required compiler toolchain:
 
 _Arch_
 ```
