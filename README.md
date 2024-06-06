@@ -1,5 +1,5 @@
 # Turdle
-_A **TU**I Wo**rdle** clone for your terminal_
+_A **TU**I Wo**rdle** clone for the terminal_
 
 Turdle is a clone of the popular browser-based word game Wordle by Josh Wardle, now owned by The New York Times.
 A random word is selected each time the game is run.
@@ -19,7 +19,9 @@ A random word is selected each time the game is run.
 ![Turdle screenshot](https://files.catbox.moe/ijnh30.png)
 
 ## Installation
-If you have Rust [installed](https://rustup.rs), you can install by running:
+Linux and Windows binaries are available on the [releases](https://github.com/weiteck/turdle/releases) page.
+
+Alternatively, if you have Rust [installed](https://rustup.rs), you can install by running:
 ```
 cargo install turdle --locked
 ```
@@ -39,6 +41,8 @@ _Centos_
 ```
 sudo yum install gcc
 ````
+### Compatibility
+Testing has been on modern terminal emulators. The large font rendering may not work on Windows command prompt or Powershell, but should work on later versions of [Windows Terminal](https://github.com/microsoft/terminal).
 
 ---
 ### License
