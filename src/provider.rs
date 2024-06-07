@@ -11,11 +11,11 @@ use time::{Month, OffsetDateTime};
 use crate::{data::answers::ANSWERS, AppMode};
 
 #[derive(Default)]
-pub struct AnswerClient;
+pub struct AnswerProvider;
 
 const REQ_TIMEOUT: u64 = 5;
 
-impl AnswerClient {
+impl AnswerProvider {
     pub fn get_answer(&self, mode: AppMode) -> Result<String> {
         match mode {
             AppMode::Random => Ok(random_answer()),
@@ -55,7 +55,7 @@ impl AnswerClient {
             .as_str()
             .expect("Could not retrieve solution from NYT API");
 
-        println!("OK");
+        println!("OK"); // Was able to retrieve solution
         sleep(Duration::from_secs(1)); // Delay so output is readable
         Ok(answer.into())
     }

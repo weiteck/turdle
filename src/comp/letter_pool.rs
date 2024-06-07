@@ -53,6 +53,7 @@ impl LetterPool {
 impl MockComponent for LetterPool {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
         if self.props.get_or(Attribute::Display, AttrValue::Flag(true)) == AttrValue::Flag(true) {
+            // Setup templates to draw letters in alpha/QWERTY order
             let row_ordering_template = if self.qwerty_mode {
                 vec![
                     vec!['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
@@ -67,8 +68,10 @@ impl MockComponent for LetterPool {
                 ]
             };
 
+            // Rows to be populated
             let mut rows: Vec<Vec<Span>> = vec![vec![], vec![], vec![]];
 
+            // Populate rows
             let guard = self.pool.read().unwrap();
             for (i, row) in row_ordering_template.iter().enumerate() {
                 for ch in row {
@@ -98,6 +101,7 @@ impl MockComponent for LetterPool {
                 }
             }
 
+            // Row drawing logic
             for (i, row) in rows.into_iter().enumerate() {
                 let line = Line::from(row);
                 let par = Paragraph::new(line).alignment(Alignment::Center);

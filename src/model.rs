@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use anyhow::Result;
-use tui_realm_stdlib::Phantom;
+use tui_realm_stdlib::Phantom as GlobalListener;
 use tuirealm::{
     terminal::TerminalBridge,
     tui::layout::{Constraint, Layout},
@@ -88,7 +88,7 @@ impl Model {
 
         // Mount components
         let (letter_pool, pool_rc) = LetterPool::new();
-        let board = Board::new(answer).with_letter_state(pool_rc); // TODO
+        let board = Board::new(answer).with_letter_state(pool_rc);
         app.mount(
             Id::Board,
             Box::new(board),
@@ -99,7 +99,7 @@ impl Model {
             Box::new(letter_pool),
             vec![Sub::new(SubEventClause::Any, SubClause::Always)],
         )?;
-        app.mount(Id::GlobalListener, Box::<Phantom>::default(), vec![])?;
+        app.mount(Id::GlobalListener, Box::<GlobalListener>::default(), vec![])?;
         app.active(&Id::GlobalListener)?;
 
         Ok(app)

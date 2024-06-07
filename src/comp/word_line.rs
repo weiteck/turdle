@@ -15,7 +15,7 @@ use crate::{
 
 use super::big_letter::BigLetter;
 
-const ANIM_REVEAL_STEP_TIME: Duration = Duration::from_millis(400);
+const ANIM_REVEAL_STEP_TIME: Duration = Duration::from_millis(350);
 
 #[derive(Clone, Debug)]
 pub struct WordLine {
@@ -133,7 +133,11 @@ impl WordLine {
 
                 self.letters[i] = (*entered_char, LetterState::Contains);
             } else {
-                res.insert(*entered_char, LetterState::Incorrect);
+                let current_state = res.insert(*entered_char, LetterState::Incorrect);
+                // Don't downgrade `Contains` letters to `Incorrect`
+                if current_state == Some(LetterState::Contains) {
+                    res.insert(*entered_char, LetterState::Contains);
+                }
                 self.letters[i] = (*entered_char, LetterState::Incorrect);
             }
         }

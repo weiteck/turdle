@@ -2,15 +2,15 @@ extern crate tuirealm;
 
 use anyhow::{bail, Result};
 use clap::{arg, Command};
-use client::AnswerClient;
+use provider::AnswerProvider;
 use model::Model;
 use time::{Date, OffsetDateTime, Time};
 use tuirealm::{PollStrategy, Update};
 
-mod client;
 mod comp;
 mod data;
 mod model;
+mod provider;
 mod theme;
 
 const APP_NAME: &str = env!("CARGO_PKG_NAME");
@@ -18,9 +18,7 @@ const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
 const APP_AUTHOR: &str = env!("CARGO_PKG_AUTHORS");
 const APP_DESC: &str = env!("CARGO_PKG_DESCRIPTION");
 
-#[derive(Debug, Default)]
 pub enum AppMode {
-    #[default]
     Random,
     Today(OffsetDateTime),
     Date(OffsetDateTime),
@@ -34,11 +32,11 @@ fn cli() -> Command {
         .subcommand_required(false)
         .allow_external_subcommands(false)
         .subcommand(Command::new("random").about("Pick a random word (default)"))
-        .subcommand(Command::new("today").about("Fetch today's solution from the NYT"))
+        .subcommand(Command::new("today").about("Fetch today's solution from NYT"))
         .subcommand(
             Command::new("date")
                 .about("Fetch the solution for the given date")
-                .arg(arg!(date: <DATE> "The date in YYYY-MM-DD format"))
+                .arg(arg!(date: <DATE> "The date in [YY]YY-MM-DD format"))
                 .arg_required_else_help(true),
         )
 }
@@ -46,8 +44,6 @@ fn cli() -> Command {
 fn parse_cli() -> Result<AppMode> {
     let matches = cli().get_matches();
     match matches.subcommand() {
-        Some(("random", _)) => Ok(AppMode::Random), // Default
-
         Some(("today", _)) => {
             let today = OffsetDateTime::now_local()?;
             Ok(AppMode::Today(today))
@@ -92,17 +88,18 @@ fn parse_cli() -> Result<AppMode> {
 
             Ok(AppMode::Date(date))
         }
-        
-        None => Ok(AppMode::Random),
 
-        _ => unreachable!("all valid clap options should be covered"),
+        Some(("random", _)) => Ok(AppMode::Random),
+
+        None => Ok(AppMode::Random), // Default
+
+        _ => unreachable!("Not all valid CLI options were handled"),
     }
 }
 
 fn main() -> Result<()> {
     let mode = parse_cli()?;
-    let answer = AnswerClient.get_answer(mode)?;
-    println!("The turdle word was: \"{}\".", answer);
+    let answer = AnswerProvider.get_answer(mode)?;
 
     let mut model = Model::new(&answer);
 
@@ -143,6 +140,8 @@ fn main() -> Result<()> {
     // Restore terminal
     model.terminal.leave_alternate_screen()?;
     model.terminal.disable_raw_mode()?;
+
+    println!("The solution was: \"{}\"", answer);
 
     Ok(())
 }
