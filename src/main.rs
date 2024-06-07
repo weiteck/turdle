@@ -68,6 +68,9 @@ fn parse_cli() -> Result<AppMode> {
                 .expect("Valid year should be provided (use format YY-MM-DD)")
                 .parse()
                 .expect("Valid year should be provided (use format YY-MM-DD)");
+            // Allow for two-digit years
+            // This will be a problem if Wordle is still a thing in 2100
+            let year = if year < 100 { year + 2000 } else { year };
             let month: u8 = date
                 .get(1)
                 .expect("Valid month should be provided (use format YY-MM-DD)")
@@ -89,6 +92,8 @@ fn parse_cli() -> Result<AppMode> {
 
             Ok(AppMode::Date(date))
         }
+        
+        None => Ok(AppMode::Random),
 
         _ => unreachable!("all valid clap options should be covered"),
     }
