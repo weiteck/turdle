@@ -44,7 +44,9 @@ sudo yum install gcc
 ````
 
 ### Compatibility
-Testing has been on modern terminal emulators. The large font rendering may not work on Windows command prompt or Powershell, but should work on later versions of [Windows Terminal](https://github.com/microsoft/terminal).
+Due to the large font used for the gameboard, **your terminal must be at least 34 rows high** for it to render correctly.
+
+Turdle targets modern terminal emulators. The large font rendering is unlikely to work running in the Windows command prompt or Powershell, but it does work on later versions of [Windows Terminal](https://github.com/microsoft/terminal).
 
 ---
 ### License
