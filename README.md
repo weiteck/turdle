@@ -3,7 +3,7 @@
 
 ![Turdle screenshot](https://files.catbox.moe/ijnh30.png)
 
-Turdle is a clone of the popular browser-based word game Wordle by Josh Wardle, now owned by The New York Times. The (admittedly crude) name is a concatenation of **TU**I + Wo**rdle**.
+Turdle is a clone of the popular browser-based word game Wordle by Josh Wardle, now owned by The New York Times. The (admittedly crude) name is a portmanteau of **TU**I + Wo**rdle**.
 
 A random word is selected each time the game is run. Run `turdle --help` for additional options.
 
@@ -16,6 +16,7 @@ A random word is selected each time the game is run. Run `turdle --help` for add
 * Play a specific date's Wordle with `turdle date <YY-MM-DD>`
 
 ### Special Keys
+* Use <kbd>Esc</kbd> to exit
 * Use <kbd>Tab</kbd> to toggle the keyboard layout or set `TURDLE_QWERTY_MODE=1` to always start with QWERTY layout
 * Use <kbd>Page Up</kbd> and <kbd>Page Down</kbd> to cycle the background colour and <kbd>Home</kbd> to reset it
 
