@@ -18,7 +18,7 @@ use tuirealm::{
     AttrValue, Attribute, Component, Event, Frame, MockComponent, NoUserEvent, Props, State,
 };
 
-use crate::model::{LetterState, Msg};
+use crate::{model::{LetterState, Msg}, provider::Solution};
 
 use super::word_line::{WordLine, WordLineState};
 
@@ -52,9 +52,9 @@ pub enum BoardState {
 }
 
 impl Board {
-    pub fn new(answer: &str) -> Self {
+    pub fn new(solution: &Solution) -> Self {
         let lines = (0..6)
-            .map(|_| WordLine::default().with_answer(answer))
+            .map(|_| WordLine::default().with_answer(&solution.answer))
             .collect();
 
         Self {

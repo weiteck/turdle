@@ -13,7 +13,7 @@ use tuirealm::{
     Application, EventListenerCfg, NoUserEvent, Sub, SubClause, SubEventClause, Update,
 };
 
-use crate::comp::{board::Board, letter_pool::LetterPool};
+use crate::{comp::{board::Board, letter_pool::LetterPool}, provider::Solution};
 
 const TERM_REQ_WIDTH: u16 = 55;
 const TERM_REQ_HEIGHT: u16 = 34;
@@ -50,9 +50,9 @@ pub enum LetterState {
 }
 
 impl Model {
-    pub fn new(answer: &str) -> Self {
+    pub fn new(solution: &Solution) -> Self {
         Self {
-            app: Self::init_app(answer).expect("Could not initialise application"),
+            app: Self::init_app(&solution).expect("Could not initialise application"),
             quit: false,
             redraw: true,
             terminal: TerminalBridge::new().expect("Could not initialise terminal"),
@@ -88,7 +88,7 @@ impl Model {
         Ok(())
     }
 
-    fn init_app(answer: &str) -> Result<Application<Id, Msg, NoUserEvent>> {
+    fn init_app(solution: &Solution) -> Result<Application<Id, Msg, NoUserEvent>> {
         let mut app = Application::init(
             EventListenerCfg::default()
                 .default_input_listener(Duration::from_millis(20))
@@ -98,7 +98,7 @@ impl Model {
 
         // Mount components
         let (letter_pool, pool_rc) = LetterPool::new();
-        let board = Board::new(answer).with_letter_state(pool_rc);
+        let board = Board::new(&solution).with_letter_state(pool_rc);
         app.mount(
             Id::Board,
             Box::new(board),

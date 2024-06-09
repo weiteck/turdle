@@ -2,7 +2,7 @@ extern crate tuirealm;
 
 use anyhow::{bail, Result};
 use clap::{arg, Command};
-use provider::AnswerProvider;
+use provider::SolutionProvider;
 use model::Model;
 use time::{Date, OffsetDateTime, Time};
 use tuirealm::{PollStrategy, Update};
@@ -17,6 +17,7 @@ const APP_NAME: &str = env!("CARGO_PKG_NAME");
 const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
 const APP_AUTHOR: &str = env!("CARGO_PKG_AUTHORS");
 const APP_DESC: &str = env!("CARGO_PKG_DESCRIPTION");
+
 
 pub enum AppMode {
     Random,
@@ -99,9 +100,9 @@ fn parse_cli() -> Result<AppMode> {
 
 fn main() -> Result<()> {
     let mode = parse_cli()?;
-    let answer = AnswerProvider.get_answer(mode)?;
+    let solution = SolutionProvider.get_answer(mode)?;
 
-    let mut model = Model::new(&answer);
+    let mut model = Model::new(&solution);
 
     // Init terminal
     model.terminal.enter_alternate_screen()?;
@@ -141,7 +142,7 @@ fn main() -> Result<()> {
     model.terminal.leave_alternate_screen()?;
     model.terminal.disable_raw_mode()?;
 
-    println!("The solution was: \"{}\"", answer);
+    println!("The solution was: \"{}\"", &solution.answer);
 
     Ok(())
 }

@@ -94,7 +94,6 @@ impl MockComponent for BigLetter {
                 .expect("Could not build BigText");
             let area = Rect {
                 y: area.y + 1,
-                // x: area.x + 1,
                 ..area
             };
             frame.render_widget(big_text, area);
