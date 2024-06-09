@@ -3,12 +3,20 @@ use std::time::Duration;
 use anyhow::Result;
 use tui_realm_stdlib::Phantom as GlobalListener;
 use tuirealm::{
+    props::Style,
     terminal::TerminalBridge,
-    tui::layout::{Constraint, Layout},
+    tui::{
+        buffer::Buffer,
+        layout::{Constraint, Layout},
+        style::Stylize,
+    },
     Application, EventListenerCfg, NoUserEvent, Sub, SubClause, SubEventClause, Update,
 };
 
 use crate::comp::{board::Board, letter_pool::LetterPool};
+
+const TERM_REQ_WIDTH: u16 = 55;
+const TERM_REQ_HEIGHT: u16 = 34;
 
 #[derive(Debug, PartialEq)]
 pub enum Msg {
@@ -21,7 +29,6 @@ pub enum Msg {
 pub enum Id {
     Board,
     LetterPool,
-    ToastNotification,
     GlobalListener,
 }
 
@@ -70,9 +77,12 @@ impl Model {
             ])
             .areas(rect_centre);
 
-            self.app.view(&Id::Board, frame, rect_board);
-            self.app.view(&Id::LetterPool, frame, rect_letter_pool);
-            self.app.view(&Id::ToastNotification, frame, frame.size());
+            // Render components
+            // Check terminal size to avoid panics
+            if terminal_size_ok(frame.buffer_mut()) {
+                self.app.view(&Id::Board, frame, rect_board);
+                self.app.view(&Id::LetterPool, frame, rect_letter_pool);
+            }
         })?;
 
         Ok(())
@@ -123,5 +133,41 @@ impl Update<Msg> for Model {
         } else {
             None
         }
+    }
+}
+
+// Returns true if terminal size is large enough to render
+// Otherwise renders text message with size information
+fn terminal_size_ok(buf: &mut Buffer) -> bool {
+    if buf.area.width >= TERM_REQ_WIDTH && buf.area.height >= TERM_REQ_HEIGHT {
+        true
+    } else {
+        let msg = format!(
+            "Terminal too small (min. {}W x {}H)",
+            TERM_REQ_WIDTH, TERM_REQ_HEIGHT
+        );
+        buf.set_string(0, 0, msg, Style::default().bold());
+
+        if buf.area.height >= 2 {
+            let diff_w = TERM_REQ_WIDTH.saturating_sub(buf.area.width);
+            let diff_h = TERM_REQ_HEIGHT.saturating_sub(buf.area.height);
+
+            if diff_w > 0 && diff_h > 0 {
+                let msg = format!("{} more cols & {} more rows needed", diff_w, diff_h);
+                buf.set_string(0, 1, msg, Style::default().dim());
+            } else if diff_w > 0 {
+                let msg = format!("{} more columns needed", diff_w);
+                buf.set_string(0, 1, msg, Style::default().dim());
+            } else {
+                let msg = format!("{} more rows needed", diff_h);
+                buf.set_string(0, 1, msg, Style::default().dim());
+            }
+
+            if buf.area.height >= 3 {
+                buf.set_string(0, 2, "Resize or <Esc> to exit", Style::default().dim())
+            }
+        }
+
+        false
     }
 }
