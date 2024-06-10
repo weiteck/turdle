@@ -12,6 +12,7 @@ A random word is selected each time the game is run. Run `turdle --help` for add
 * Large-font gameboard reminiscent of the original game
 * Animated letter reveals and invalid word feedback
 * 'Keyboard' showing the state of each letter you've used
+* An emoji result grid is printed when you guess correctly
 * Play today's Wordle with `turdle today`
 * Play a specific date's Wordle with `turdle date <YY-MM-DD>`
 
