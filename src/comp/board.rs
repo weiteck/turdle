@@ -18,7 +18,11 @@ use tuirealm::{
     AttrValue, Attribute, Component, Event, Frame, MockComponent, NoUserEvent, Props, State,
 };
 
-use crate::{model::{LetterState, Msg}, provider::Solution};
+use crate::{
+    model::{LetterState, Msg},
+    provider::Solution,
+    ResultGrid,
+};
 
 use super::word_line::{WordLine, WordLineState};
 
@@ -38,16 +42,18 @@ pub struct Board {
     active_line: usize,
     bg: Option<u8>,
     letter_states: Rc<RwLock<IndexMap<char, LetterState>>>,
+    solution: Solution,
     anim_last_frame_index: usize,
     anim_last_frame_time: Instant,
 }
 
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub enum BoardState {
     #[default]
     Playing,
     Failed,
-    Succeded,
+    Succeded(ResultGrid),
+    Finished,
     Animating,
 }
 
@@ -61,6 +67,7 @@ impl Board {
             lines,
             anim_last_frame_index: 0,
             anim_last_frame_time: Instant::now(),
+            solution: solution.to_owned(),
             props: Default::default(),
             state: Default::default(),
             active_line: Default::default(),
@@ -103,7 +110,15 @@ impl Board {
         match line.submit() {
             WordLineState::Correct(res) => {
                 self.update_letter_pool(res);
-                self.state = BoardState::Succeded;
+                let result_grid = ResultGrid {
+                    solution: self.solution.clone(),
+                    lines_used: (self.active_line + 1) as u8,
+                    grid: self.lines
+                        .iter()
+                        .map(|line| line.get_letter_states())
+                        .collect(),
+            };
+                self.state = BoardState::Succeded(result_grid);
             }
             WordLineState::Incorrect(res) => {
                 self.update_letter_pool(res);
@@ -283,9 +298,16 @@ impl Component<Msg, NoUserEvent> for Board {
                 modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
             }) => self.perform(Cmd::Type(ch)),
 
+
             _ => CmdResult::None,
         };
 
-        Some(Msg::None)
+        match self.state.clone() {
+            BoardState::Succeded(rg) => {
+                self.state = BoardState::Finished;
+                Some(Msg::Succeded(rg))
+            },
+            _ => Some(Msg::None)
+        }
     }
 }

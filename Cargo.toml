@@ -1,7 +1,7 @@
 [package]
 name = "turdle"
 authors = ["Chris Price"]
-version = "0.2.2"
+version = "0.3.0"
 description = "A Wordle clone for the terminal"
 edition = "2021"
 keywords = ["wordle"]

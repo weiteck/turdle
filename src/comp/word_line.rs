@@ -76,6 +76,10 @@ impl WordLine {
         }
     }
 
+    pub fn get_letter_states(&self) -> Vec<LetterState> {
+        self.letters.iter().map(|(_, ls)| *ls).collect()
+    }
+
     // Assess entered word if 5 letters have been entered
     pub fn submit(&mut self) -> WordLineState {
         if self.letters.len() == 5 {

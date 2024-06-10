@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use anyhow::Result;
+use anyhow::{bail, Result};
 use tui_realm_stdlib::Phantom as GlobalListener;
 use tuirealm::{
     props::Style,
@@ -10,10 +10,15 @@ use tuirealm::{
         layout::{Constraint, Layout},
         style::Stylize,
     },
-    Application, EventListenerCfg, NoUserEvent, Sub, SubClause, SubEventClause, Update,
+    Application, EventListenerCfg, NoUserEvent, PollStrategy, Sub, SubClause, SubEventClause,
+    Update,
 };
 
-use crate::{comp::{board::Board, letter_pool::LetterPool}, provider::Solution};
+use crate::{
+    comp::{board::Board, letter_pool::LetterPool},
+    provider::Solution,
+    ResultGrid,
+};
 
 const TERM_REQ_WIDTH: u16 = 55;
 const TERM_REQ_HEIGHT: u16 = 34;
@@ -21,7 +26,7 @@ const TERM_REQ_HEIGHT: u16 = 34;
 #[derive(Debug, PartialEq)]
 pub enum Msg {
     None,
-    Notification(String),
+    Succeded(ResultGrid),
     Quit,
 }
 
@@ -37,6 +42,7 @@ pub struct Model {
     pub quit: bool,
     pub redraw: bool,
     pub terminal: TerminalBridge,
+    pub result_grid: Option<ResultGrid>,
 }
 
 #[derive(Debug, Default, PartialEq, Clone, Copy)]
@@ -52,10 +58,11 @@ pub enum LetterState {
 impl Model {
     pub fn new(solution: &Solution) -> Self {
         Self {
-            app: Self::init_app(&solution).expect("Could not initialise application"),
+            app: Self::init_app(solution).expect("Could not initialise application"),
             quit: false,
             redraw: true,
             terminal: TerminalBridge::new().expect("Could not initialise terminal"),
+            result_grid: None,
         }
     }
 
@@ -98,7 +105,7 @@ impl Model {
 
         // Mount components
         let (letter_pool, pool_rc) = LetterPool::new();
-        let board = Board::new(&solution).with_letter_state(pool_rc);
+        let board = Board::new(solution).with_letter_state(pool_rc);
         app.mount(
             Id::Board,
             Box::new(board),
@@ -114,6 +121,40 @@ impl Model {
 
         Ok(app)
     }
+
+    // Main loop
+    pub fn run(&mut self) -> Result<()> {
+        while !self.quit {
+            // Tick
+            match self.app.tick(PollStrategy::Once) {
+                Ok(messages) if !messages.is_empty() => {
+                    // Redraw if a message has been processed
+                    self.redraw = true;
+
+                    for msg in messages.into_iter() {
+                        let mut msg = Some(msg);
+                        while msg.is_some() {
+                            msg = self.update(msg);
+                        }
+                    }
+                }
+
+                Err(e) => {
+                    bail!("Error: {}", e)
+                }
+
+                _ => {}
+            }
+
+            // Redraw
+            if self.redraw {
+                self.view()?;
+                self.redraw = false;
+            }
+        }
+
+        Ok(())
+    }
 }
 
 impl Update<Msg> for Model {
@@ -128,6 +169,12 @@ impl Update<Msg> for Model {
                     self.quit = true;
                     None
                 }
+
+                Msg::Succeded(rg) => {
+                    self.result_grid = Some(rg);
+                    None
+                }
+
                 _ => None,
             }
         } else {

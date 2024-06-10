@@ -12,6 +12,7 @@ use crate::{data::answers::ANSWERS, AppMode};
 
 const REQ_TIMEOUT: u64 = 10;
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct Solution {
     pub wordle_number: Option<u64>,
     pub answer: String,

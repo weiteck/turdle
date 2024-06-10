@@ -1,11 +1,13 @@
 extern crate tuirealm;
 
+use std::io::stdout;
+
 use anyhow::{bail, Result};
 use clap::{arg, Command};
-use provider::SolutionProvider;
-use model::Model;
+use crossterm::{execute, style::Print};
+use model::{LetterState, Model};
+use provider::{Solution, SolutionProvider};
 use time::{Date, OffsetDateTime, Time};
-use tuirealm::{PollStrategy, Update};
 
 mod comp;
 mod data;
@@ -18,6 +20,12 @@ const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
 const APP_AUTHOR: &str = env!("CARGO_PKG_AUTHORS");
 const APP_DESC: &str = env!("CARGO_PKG_DESCRIPTION");
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct ResultGrid {
+    solution: Solution,
+    lines_used: u8,
+    grid: Vec<Vec<LetterState>>,
+}
 
 pub enum AppMode {
     Random,
@@ -109,40 +117,62 @@ fn main() -> Result<()> {
     model.terminal.enable_raw_mode()?;
 
     // Main loop
-    while !model.quit {
-        // Tick
-        match model.app.tick(PollStrategy::Once) {
-            Ok(messages) if !messages.is_empty() => {
-                // Redraw if a message has been processed
-                model.redraw = true;
-
-                for msg in messages.into_iter() {
-                    let mut msg = Some(msg);
-                    while msg.is_some() {
-                        msg = model.update(msg);
-                    }
-                }
-            }
-
-            Err(e) => {
-                bail!("Error: {}", e)
-            }
-
-            _ => {}
-        }
-
-        // Redraw
-        if model.redraw {
-            model.view()?;
-            model.redraw = false;
-        }
-    }
+    model.run()?;
 
     // Restore terminal
     model.terminal.leave_alternate_screen()?;
     model.terminal.disable_raw_mode()?;
 
-    println!("The solution was: \"{}\"", &solution.answer);
+    // Show results if player got the word
+    if let Some(rg) = model.result_grid {
+        output_result(rg)?;
+    } else {
+        println!("The solution was: \"{}\"", &solution.answer);
+    }
+
+    Ok(())
+}
+
+fn output_result(rg: ResultGrid) -> Result<()> {
+    if let Some(num) = rg.solution.wordle_number {
+        // Insert thousands separator
+        let mut wn = num.to_string();
+        if wn.len() > 3 {
+            wn.insert(wn.len() - 3, ',');
+        }
+
+        let heading = format!(
+            "Wordle {} {}/6\n",
+            wn,
+            rg.lines_used
+        );
+        // Print dividing line equal to heading length
+        for _ in 1..heading.len() {
+            execute!(stdout(), Print("─"))?
+        }
+        println!();
+        println!("{}", heading);
+    } else {
+    println!("──────────");
+        println!(
+            "Turdle {}/6\n",
+            rg.lines_used
+        );
+    }
+
+    // Print the result emoji grid
+    for line in rg.grid.iter() {
+        if !line.is_empty() {
+            for res in line.iter() {
+                match res {
+                    LetterState::Contains => execute!(stdout(), Print("🟨"))?,
+                    LetterState::Correct => execute!(stdout(), Print("🟩"))?,
+                    _ => execute!(stdout(), Print("⬛"))?,
+                }
+            }
+            execute!(stdout(), Print("\n"))?;
+        }
+    }
 
     Ok(())
 }
