@@ -6,6 +6,7 @@ use std::{
 
 use anyhow::{bail, Result};
 use rand::Rng;
+use serde_json::Value;
 use time::{Month, OffsetDateTime};
 
 use crate::{data::answers::ANSWERS, AppMode};
@@ -59,7 +60,7 @@ impl SolutionProvider {
         let json: serde_json::Value = serde_json::from_str(&res)?;
         let wordle_number = json
             .get("days_since_launch")
-            .expect("Could not retrieve Worlde number from NYT API")
+            .unwrap_or(&Value::from(0)) // Must be Wordle zero if `days_since_launch` field is missing
             .as_u64()
             .expect("Could not retrieve Wordle number from NYT API");
         let answer = json
